@@ -1,6 +1,6 @@
 import "./TicTacToe.scss";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   checkColumns,
@@ -10,10 +10,58 @@ import {
 } from "../../utils/utils";
 import Box from "../Box/Box";
 
+const checkBoard = (board) => {
+  const { rowWinX, rowWinO } = checkRows(board);
+  const { colWinX, colWinO } = checkColumns(board);
+  const {
+    primaryDiagonalX,
+    primaryDiagonalO,
+    secondaryDiagonalX,
+    secondaryDiagonalO,
+  } = checkDiagonals(board);
+
+  if ((rowWinX || colWinX) && !(rowWinO || colWinO)) {
+    return { xWins: true, oWins: false };
+  }
+
+  if (!(rowWinX || colWinX) && (rowWinO || colWinO)) {
+    return { xWins: false, oWins: true };
+  }
+
+  if (
+    (primaryDiagonalX || secondaryDiagonalX) &&
+    !(primaryDiagonalO || secondaryDiagonalO)
+  ) {
+    return { xWins: true, oWins: false };
+  }
+
+  if (
+    !(primaryDiagonalX || secondaryDiagonalX) &&
+    (primaryDiagonalO || secondaryDiagonalO)
+  ) {
+    return { xWins: false, oWins: true };
+  }
+
+  return {
+    xWins: false,
+    oWins: false,
+  };
+};
+
 const TicTacToe = ({ size }) => {
   const [player, setPlayer] = useState("x");
-  const [board, setBoard] = useState(generateBoard(size));
+  const [board, setBoard] = useState([]);
   const [win, setWin] = useState("");
+
+  useEffect(() => {
+    resetBoard();
+    setBoard(generateBoard(size));
+  }, [size]);
+
+  const resetBoard = useCallback(() => {
+    const newBoard = board.map((row) => row.map(() => ""));
+    setBoard([...newBoard]);
+  }, [board]);
 
   const handleBoxClick = (row, col) => {
     const newBoard = [...board];
@@ -29,45 +77,16 @@ const TicTacToe = ({ size }) => {
     }
   };
 
-  const resetBoard = () => {
-    const newBoard = board.map((row) => row.map(() => ""));
-    setBoard([...newBoard]);
-  };
-
   const checkBoardWin = () => {
-    const { rowWinX, rowWinO } = checkRows(board);
-    const { colWinX, colWinO } = checkColumns(board);
-    const {
-      primaryDiagonalX,
-      primaryDiagonalO,
-      secondaryDiagonalX,
-      secondaryDiagonalO,
-    } = checkDiagonals(board);
+    const { xWins, oWins } = checkBoard(board);
 
-    if ((rowWinX || colWinX) && !(rowWinO || colWinO)) {
+    if (xWins) {
       setWin("x");
       return true;
     }
 
-    if (!(rowWinX || colWinX) && (rowWinO || colWinO)) {
+    if (oWins) {
       setWin("o");
-      return true;
-    }
-
-    if (
-      (primaryDiagonalX || secondaryDiagonalX) &&
-      !(primaryDiagonalO || secondaryDiagonalO)
-    ) {
-      setWin("x");
-      return true;
-    }
-
-    if (
-      !(primaryDiagonalX || secondaryDiagonalX) &&
-      (primaryDiagonalO || secondaryDiagonalO)
-    ) {
-      setWin("o");
-      return true;
     }
 
     return false;
